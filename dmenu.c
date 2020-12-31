@@ -332,10 +332,11 @@ keypress(XKeyEvent *ev)
 		case XK_e: ksym = XK_End;       break;
 		case XK_f: ksym = XK_Right;     break;
 		case XK_g: ksym = XK_Escape;    break;
-		case XK_h: ksym = XK_BackSpace; break;
 		case XK_i: ksym = XK_Tab;       break;
 		case XK_M: ksym = XK_Return; ev->state &= ~ControlMask; break;
+		case XK_l:
 		case XK_j: ksym = XK_Down;      break;
+		case XK_h:
 		case XK_k: ksym = XK_Up;        break;
 
 		case XK_u: /* delete left */
