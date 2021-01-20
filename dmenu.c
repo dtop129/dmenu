@@ -463,6 +463,8 @@ keypress(XKeyEvent *ev)
 			goto draw;
 		case XK_Return:
 		case XK_KP_Enter:
+			if (restrict_return)
+				break;
 			if (sel && issel(sel->id)) {
 				for (int i = 0;i < selidsize;i++)
 					if (selid[i] == sel->id)
@@ -574,6 +576,13 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
+		if (restrict_return) {
+			if (!sel || ev->state & (ShiftMask | ControlMask))
+				break;
+			puts(sel->text);
+			cleanup();
+			exit(0);
+		}
 		if (!(ev->state & ControlMask)) {
  			for (int i = 0;i < selidsize;i++)
  				if (selid[i] != -1 && (!sel || sel->id != selid[i]))
@@ -836,7 +845,9 @@ main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
-		} else if (i + 1 == argc)
+		} else if (!strcmp(argv[i], "-r"))
+			restrict_return = 1;
+		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
