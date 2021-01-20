@@ -460,12 +460,16 @@ insert:
 	case XK_Return:
 	case XK_KP_Enter:
 		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
+		if (sel)
+			sel->out = 1;
 		if (!(ev->state & ControlMask)) {
 			cleanup();
 			exit(0);
 		}
-		if (sel)
-			sel->out = 1;
+		else if (sel && sel->right && (sel = sel->right) == next) {
+			curr = next;
+			calcoffsets();
+		}
 		break;
 	case XK_Right:
 		if (text[cursor] != '\0') {
