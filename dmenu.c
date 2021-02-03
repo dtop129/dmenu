@@ -620,7 +620,7 @@ insert:
 	case XK_Tab:
 		if (!sel)
 			return;
-		strncpy(text, sel->text, sizeof text - 1);
+		strncpy(text, sel->stext, sizeof text - 1);
 		text[sizeof text - 1] = '\0';
 		cursor = strlen(text);
 		match();
