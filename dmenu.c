@@ -888,14 +888,19 @@ main(int argc, char *argv[])
 			topbar = 0;
 		else if (!strcmp(argv[i], "-f"))   /* grabs keyboard before reading stdin */
 			fast = 1;
-		else if (!strcmp(argv[i], "-F"))   /* grabs keyboard before reading stdin */
+		else if (!strcmp(argv[i], "-F"))   /* disable fuzzy finding */
 			fuzzy = 0;
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
 		} else if (!strcmp(argv[i], "-r"))
 			restrict_return = 1;
-		else if (i + 1 == argc)
+		} else if (!strcmp(argv[i], "-n")) {/* disable stdin */
+			use_text_input = 1;
+			nostdin = 1;
+			if (restrict_return)
+				usage();
+		} else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
@@ -950,9 +955,11 @@ main(int argc, char *argv[])
 
 	if (fast && !isatty(0)) {
 		grabkeyboard();
-		readstdin();
+		if (!nostdin)
+			readstdin();
 	} else {
-		readstdin();
+		if (!nostdin)
+			readstdin();
 		grabkeyboard();
 	}
 	setup();
