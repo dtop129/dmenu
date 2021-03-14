@@ -415,6 +415,7 @@ keypress(XKeyEvent *ev)
 {
 	char buf[32];
 	int len;
+    int nsel = 0;
 	KeySym ksym;
 	Status status;
 
@@ -589,9 +590,11 @@ insert:
 		}
 		if (!(ev->state & ControlMask)) {
  			for (int i = 0;i < selidsize;i++)
- 				if (selid[i] != -1 && (!sel || sel->id != selid[i]))
+ 				if (selid[i] != -1 && (!sel || sel->id != selid[i])) {
  					puts(items[selid[i]].text);
- 			if (sel && !(ev->state & ShiftMask))
+                    nsel++;
+                }
+ 			if (sel && !(ev->state & ShiftMask) && nsel == 0)
  				puts(sel->text);
  			else
  				puts(text);
@@ -895,8 +898,7 @@ main(int argc, char *argv[])
 			fstrstr = cistrstr;
 		} else if (!strcmp(argv[i], "-r"))
 			restrict_return = 1;
-		} else if (!strcmp(argv[i], "-n")) {/* disable stdin */
-			use_text_input = 1;
+		else if (!strcmp(argv[i], "-n")) {/* disable stdin */
 			nostdin = 1;
 			if (restrict_return)
 				usage();
