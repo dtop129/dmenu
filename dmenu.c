@@ -23,7 +23,7 @@
 
 /* macros */
 #define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x_org+(r).width)  - MAX((x),(r).x_org)) \
-                             * MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
+                              && MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -689,8 +689,19 @@ static void
 run(void)
 {
 	XEvent ev;
+	int i;
 
 	while (!XNextEvent(dpy, &ev)) {
+		if (preselected) {
+			for (i = 0; i < preselected; i++) {
+				if (sel && sel->right && (sel = sel->right) == next) {
+					curr = next;
+					calcoffsets();
+				}
+			}
+			drawmenu();
+			preselected = 0;
+		}
 		if (XFilterEvent(&ev, win))
 			continue;
 		switch(ev.type) {
@@ -833,7 +844,7 @@ static void
 usage(void)
 {
 	fputs("usage: dmenu [-bfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
-	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
+	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid] [-n number]\n", stderr);
 	exit(1);
 }
 
@@ -898,7 +909,7 @@ main(int argc, char *argv[])
 			fstrstr = cistrstr;
 		} else if (!strcmp(argv[i], "-r"))
 			restrict_return = 1;
-		else if (!strcmp(argv[i], "-n")) {/* disable stdin */
+		else if (!strcmp(argv[i], "-d")) {/* disable stdin */
 			nostdin = 1;
 			if (restrict_return)
 				usage();
@@ -923,6 +934,8 @@ main(int argc, char *argv[])
 			colortemp[3] = argv[++i];
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
+		else if (!strcmp(argv[i], "-n"))   /* preselected item */
+			preselected = atoi(argv[++i]);
 		else
 			usage();
 
