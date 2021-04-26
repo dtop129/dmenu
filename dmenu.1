@@ -3,7 +3,7 @@
 dmenu \- dynamic menu
 .SH SYNOPSIS
 .B dmenu
-.RB [ \-bfirv ]
+.RB [ \-bfirvd ]
 .RB [ \-l
 .IR lines ]
 .RB [ \-m
@@ -50,8 +50,11 @@ is faster, but will lock up X until stdin reaches end\-of\-file.
 dmenu matches menu items case insensitively.
 .TP
 .B \-r
-disables ctr-return and shift-return. this guarantees that dmenu prints to
+disables ctrl-return and shift-return. this guarantees that dmenu prints to
 stdout only once, and it only prints an item read from stdin.
+.TP
+.B \-d
+disables reading from stdin, turning dmenu into a text box
 .TP
 .BI \-l " lines"
 dmenu lists items vertically, with the given number of lines.
