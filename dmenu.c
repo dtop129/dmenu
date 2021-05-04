@@ -28,7 +28,7 @@
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
 /* enums */
-enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeOut, SchemeSelOut, SchemeLast }; /* color schemes */
 
 struct item {
 	char *text;
@@ -136,8 +136,12 @@ cistrstr(const char *s, const char *sub)
 static int
 drawitem(struct item *item, int x, int y, int w)
 {
-	if (item == sel)
+	if (item == sel) {
 		drw_setscheme(drw, scheme[SchemeSel]);
+		if (issel(item->id)) {
+			drw_setscheme(drw, scheme[SchemeSelOut]);
+		}
+	}
 	else if (issel(item->id))
 		drw_setscheme(drw, scheme[SchemeOut]);
 	else
@@ -475,14 +479,18 @@ keypress(XKeyEvent *ev)
 					if (selid[i] == sel->id)
 						selid[i] = -1;
 			} else {
+				int found = 0;
 				for (int i = 0;i < selidsize;i++)
 					if (selid[i] == -1) {
 						selid[i] = sel->id;
-						return;
+						found = 1;
+						break;
 					}
-				selidsize++;
-				selid = realloc(selid, (selidsize + 1) * sizeof(int));
-				selid[selidsize - 1] = sel->id;
+				if (!found) {
+					selidsize++;
+					selid = realloc(selid, selidsize * sizeof(int));
+					selid[selidsize - 1] = sel->id;
+				}
 			}
 			break;
 		case XK_bracketleft:
@@ -590,7 +598,7 @@ insert:
 		}
 		if (!(ev->state & ControlMask)) {
  			for (int i = 0;i < selidsize;i++)
- 				if (selid[i] != -1 && (!sel || sel->id != selid[i])) {
+ 				if (selid[i] != -1) {
  					puts(items[selid[i]].text);
                     nsel++;
                 }
@@ -753,13 +761,6 @@ setup(void)
 	for (j = 0; j < SchemeLast; j++) {
 		scheme[j] = drw_scm_create(drw, (const char**)colors[j], 2);
 	}
-	//for (j = 0; j < SchemeOut; ++j) {
-	//	for (i = 0; i < 2; ++i) {
-	//		printf("%d %d\n", i, j);
-	//		//fflush(stdout);
-	//		free((void*)colors[j][i]);
-	//	}
-	//}
 
 	clip = XInternAtom(dpy, "CLIPBOARD",   False);
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
@@ -880,11 +881,19 @@ readxresources(void) {
 		if (XrmGetResource(xdb, "dmenu.outbackground", "*", &type, &xval))
 			colors[SchemeOut][ColBg] = strdup(xval.addr);
 		else
-			colors[SchemeOut][ColBg] = strdup(colors[SchemeSel][ColBg]);
+			colors[SchemeOut][ColBg] = strdup(colors[SchemeOut][ColBg]);
 		if (XrmGetResource(xdb, "dmenu.outforeground", "*", &type, &xval))
 			colors[SchemeOut][ColFg] = strdup(xval.addr);
 		else
-			colors[SchemeOut][ColFg] = strdup(colors[SchemeSel][ColFg]);
+			colors[SchemeOut][ColFg] = strdup(colors[SchemeOut][ColFg]);
+		if (XrmGetResource(xdb, "dmenu.seloutbackground", "*", &type, &xval))
+			colors[SchemeSelOut][ColBg] = strdup(xval.addr);
+		else
+			colors[SchemeSelOut][ColBg] = strdup(colors[SchemeSelOut][ColBg]);
+		if (XrmGetResource(xdb, "dmenu.seloutforeground", "*", &type, &xval))
+			colors[SchemeSelOut][ColFg] = strdup(xval.addr);
+		else
+			colors[SchemeSelOut][ColFg] = strdup(colors[SchemeSelOut][ColFg]);
 
 		XrmDestroyDatabase(xdb);
 	}
