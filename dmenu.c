@@ -753,10 +753,13 @@ setup(void)
 	for (j = 0; j < SchemeLast; j++) {
 		scheme[j] = drw_scm_create(drw, (const char**)colors[j], 2);
 	}
-	for (j = 0; j < SchemeOut; ++j) {
-		for (i = 0; i < 2; ++i)
-			free((void*)colors[j][i]);
-	}
+	//for (j = 0; j < SchemeOut; ++j) {
+	//	for (i = 0; i < 2; ++i) {
+	//		printf("%d %d\n", i, j);
+	//		//fflush(stdout);
+	//		free((void*)colors[j][i]);
+	//	}
+	//}
 
 	clip = XInternAtom(dpy, "CLIPBOARD",   False);
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
@@ -964,7 +967,6 @@ main(int argc, char *argv[])
 	   colors[SchemeSel][ColBg]  = strdup(colortemp[2]);
 	if (colortemp[3])
 	   colors[SchemeSel][ColFg]  = strdup(colortemp[3]);
-
 
 	lrpad = drw->fonts->h;
 
