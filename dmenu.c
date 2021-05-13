@@ -592,9 +592,6 @@ insert:
 		if (restrict_return) {
 			if (!sel || ev->state & (ShiftMask | ControlMask))
 				break;
-			puts(sel->text);
-			cleanup();
-			exit(0);
 		}
 		if (!(ev->state & ControlMask)) {
  			for (int i = 0;i < selidsize;i++)
@@ -604,7 +601,7 @@ insert:
                 }
  			if (sel && !(ev->state & ShiftMask) && nsel == 0)
  				puts(sel->text);
- 			else
+ 			else if (nsel == 0)
  				puts(text);
  			cleanup();
  			exit(0);
