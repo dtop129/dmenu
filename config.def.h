@@ -8,8 +8,8 @@ static int nostdin = 0;                    /* -n option, if 1, disable stdin, us
 static int fuzzy = 1;                      /* -F  option; if 0, dmenu doesn't use fuzzy matching     */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-	"monospace:size=11",
-	"JoyPixels:size=11"
+	"monospace:size=12",
+	"JoyPixels:size=12"
 };
 static const char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
 

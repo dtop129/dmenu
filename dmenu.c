@@ -36,6 +36,7 @@ struct item {
 	struct item *left, *right;
 	int id;
 	double distance;
+	int index;
 };
 
 static char text[BUFSIZ] = "";
@@ -48,6 +49,7 @@ static struct item *items = NULL;
 static struct item *matches, *matchend;
 static struct item *prev, *curr, *next, *sel;
 static int mon = -1, screen;
+static int print_index = 0;
 
 static int *selid = NULL;
 static unsigned int selidsize = 0;
@@ -594,17 +596,22 @@ insert:
 				break;
 		}
 		if (!(ev->state & ControlMask)) {
- 			for (int i = 0;i < selidsize;i++)
- 				if (selid[i] != -1) {
- 					puts(items[selid[i]].text);
-                    nsel++;
-                }
- 			if (sel && !(ev->state & ShiftMask) && nsel == 0)
- 				puts(sel->text);
- 			else if (nsel == 0)
- 				puts(text);
- 			cleanup();
- 			exit(0);
+			for (int i = 0;i < selidsize;i++)
+				if (selid[i] != -1) {
+					if (print_index)
+						printf("%d\n", items[selid[i]].index);
+					else
+						puts(items[selid[i]].text);
+					nsel++;
+				}
+			if (nsel == 0) {
+				if (print_index)
+					printf("%d\n", (sel && !(ev->state & ShiftMask)) ? sel->index : -1);
+				else
+					puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
+			}
+			cleanup();
+			exit(0);
 		}
 		else if (sel && sel->right && (sel = sel->right) == next) {
 			curr = next;
@@ -678,6 +685,7 @@ readstdin(void)
 		if (!(items[i].stext = strdup(buf)))
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
 		items[i].id = i; /* for multiselect */
+		items[i].index = i;
 		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
 		if (tmpmax > inputw) {
 			inputw = tmpmax;
@@ -916,13 +924,17 @@ main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
 			fstrncmp = strncasecmp;
 			fstrstr = cistrstr;
-		} else if (!strcmp(argv[i], "-r"))
+		} else if (!strcmp(argv[i], "-r")) {
 			restrict_return = 1;
-		else if (!strcmp(argv[i], "-d")) {/* disable stdin */
+			if (nostdin)
+				usage();
+		} else if (!strcmp(argv[i], "-d")) {/* disable stdin */
 			nostdin = 1;
 			if (restrict_return)
 				usage();
-		} else if (i + 1 == argc)
+		} else if (!strcmp(argv[i], "-ix"))  /* adds ability to return index in list */
+			print_index = 1;
+		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
