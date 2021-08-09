@@ -7,19 +7,26 @@ static int restrict_return = 0;		   /* -r option; if 1, disables shift-return an
 static int nostdin = 0;                    /* -n option, if 1, disable stdin, using dmenu only as text input */
 static int fuzzy = 1;                      /* -F  option; if 0, dmenu doesn't use fuzzy matching     */
 /* -fn option overrides fonts[0]; default X11 font or font set */
-static const char *fonts[] = {
-	"monospace:size=12",
-	"JoyPixels:size=12"
-};
-static const char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
+static char font[] = "monospace:size=10";
+static char font2[] = "monospace:size=10";
+static const char *fonts[] = { font, font2 };
+static char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
 
-static const char *colors[SchemeLast][2] = {
-	              /*     fg         bg       */
-	[SchemeNorm]    = { "#bbbbbb", "#222222" },
-	[SchemeSel]     = { "#00a8f3", "#303030" },
-	[SchemeSelOut]  = { "#70a8f3", "#383838" },
-	[SchemeOut]     = { "#000000", "#00ffff" },
-};
+static char normfgcolor[] = "#bbbbbb";
+static char normbgcolor[] = "#222222";
+static char selfgcolor[]  = "#eeeeee";
+static char selbgcolor[]  = "#005577";
+static char outfgcolor[]  = "#eeeeee";
+static char outbgcolor[]  = "#005577";
+static char seloutfgcolor[]  = "#eeeeee";
+static char seloutbgcolor[]  = "#005577";
+static char *colors[SchemeLast][2] = {
+	/*     fg         bg       */
+	[SchemeNorm]    =    { normfgcolor,    normbgcolor },
+	[SchemeSel]     =    { selfgcolor,     selbgcolor  },
+	[SchemeOut]     =    { outfgcolor,     outbgcolor  },
+	[SchemeSelOut]  = { seloutfgcolor,  seloutbgcolor  },
+ };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
 static unsigned int lines      = 0;
 
@@ -28,6 +35,22 @@ static unsigned int lines      = 0;
  * for example: " /?\"&[]"
  */
 static const char worddelimiters[] = " ";
+
+/*
+ * Xresources preferences to load at startup
+ */
+ResourcePref resources[] = {
+	{ "font",           STRING, &font },
+	{ "font2",          STRING, &font2 },
+	{ "normfgcolor",    STRING, &normfgcolor },
+	{ "normbgcolor",    STRING, &normbgcolor },
+	{ "selfgcolor",     STRING, &selfgcolor },
+	{ "selbgcolor",     STRING, &selbgcolor },
+	{ "outfgcolor",     STRING, &outfgcolor },
+	{ "outbgcolor",     STRING, &outbgcolor },
+	{ "seloutfgcolor",  STRING, &seloutfgcolor },
+	{ "seloutbgcolor",  STRING, &seloutbgcolor },
+};
 
 /* -n option; preselected item starting from 0 */
 static unsigned int preselected = 0;
