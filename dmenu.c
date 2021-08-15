@@ -620,14 +620,14 @@ keypress(XKeyEvent *ev)
 			for (int i = 0;i < selidsize;i++)
 				if (selid[i] != -1) {
 					if (print_index)
-						printf("%d\n", items[selid[i]].index);
+						printf("%d\n", items[selid[i]].index + print_index - 1);
 					else
 						puts(items[selid[i]].text);
 					nsel++;
 				}
 			if (nsel == 0) {
 				if (print_index)
-					printf("%d\n", (sel && !(ev->state & ShiftMask)) ? sel->index : -1);
+					printf("%d\n", (sel && !(ev->state & ShiftMask)) ? sel->index + print_index - 1 : -1);
 				else
 					puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
 			}
@@ -961,6 +961,8 @@ main(int argc, char *argv[])
 				usage();
 		} else if (!strcmp(argv[i], "-ix"))  /* adds ability to return index in list */
 			print_index = 1;
+		else if (!strcmp(argv[i], "-ix1"))
+			print_index = 2;
 		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
