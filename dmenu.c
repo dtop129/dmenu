@@ -50,6 +50,7 @@ static struct item *matches, *matchend;
 static struct item *prev, *curr, *next, *sel;
 static int mon = -1, screen;
 static int print_index = 0;
+static int preselected = 0;
 
 static int *selid = NULL;
 static unsigned int selidsize = 0;
@@ -986,6 +987,8 @@ main(int argc, char *argv[])
 			embed = argv[++i];
 		else if (!strcmp(argv[i], "-n"))   /* preselected item */
 			preselected = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-n1"))   /* preselected item */
+			preselected = atoi(argv[++i]) - 1;
 		else
 			usage();
 

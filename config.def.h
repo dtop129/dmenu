@@ -51,6 +51,3 @@ ResourcePref resources[] = {
 	{ "seloutfgcolor",  STRING, &seloutfgcolor },
 	{ "seloutbgcolor",  STRING, &seloutbgcolor },
 };
-
-/* -n option; preselected item starting from 0 */
-static unsigned int preselected = 0;
