@@ -52,8 +52,10 @@ is faster, but will lock up X until stdin reaches end\-of\-file.
 dmenu matches menu items case insensitively.
 .TP
 .B \-r
-disables ctrl-return and shift-return. this guarantees that dmenu prints to
-stdout only once, and it only prints an item read from stdin.
+disables shift-return. this guarantees that dmenu only prints an item read from stdin.
+.TP
+.B \-1
+disables ctrl-return. this guarantees that dmenu prints to stdout only once.
 .TP
 .B \-d
 disables reading from stdin, turning dmenu into a text box

@@ -489,7 +489,7 @@ keypress(XKeyEvent *ev)
 			goto draw;
 		case XK_Return:
 		case XK_KP_Enter:
-			if (restrict_return)
+			if (one_selection)
 				break;
 			if (sel && issel(sel->id)) {
 				for (int i = 0;i < selidsize;i++)
@@ -614,7 +614,7 @@ keypress(XKeyEvent *ev)
 	case XK_Return:
 	case XK_KP_Enter:
 		if (restrict_return) {
-			if (!sel || ev->state & (ShiftMask | ControlMask))
+			if (!sel || ev->state & ShiftMask)
 				break;
 		}
 		if (!(ev->state & ControlMask)) {
@@ -635,7 +635,7 @@ keypress(XKeyEvent *ev)
 			cleanup();
 			exit(0);
 		}
-		else if (sel && sel->right && (sel = sel->right) == next) {
+		else if (!one_selection && sel && sel->right && (sel = sel->right) == next) {
 			curr = next;
 			calcoffsets();
 		}
@@ -760,9 +760,9 @@ load_xresources(void)
 	char *resm;
 	XrmDatabase db;
 	ResourcePref *p;
-	display = XOpenDisplay(NULL);
-	resm = XResourceManagerString(display);
-	if (!resm)
+	if (!(display = XOpenDisplay(NULL)))
+		return;
+	if (!(resm = XResourceManagerString(display)))
 		return;
 	db = XrmGetStringDatabase(resm);
 	for (p = resources; p < resources + LENGTH(resources); p++)
@@ -956,6 +956,8 @@ main(int argc, char *argv[])
 			restrict_return = 1;
 			if (nostdin)
 				usage();
+		} else if (!strcmp(argv[i], "-1")) {
+			one_selection = 1;
 		} else if (!strcmp(argv[i], "-d")) {/* disable stdin */
 			nostdin = 1;
 			if (restrict_return)
