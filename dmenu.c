@@ -1,4 +1,4 @@
-/* See LICENSE file for copyright and license details. */
+	/* See LICENSE file for copyright and license details. */
 #include <ctype.h>
 #include <locale.h>
 #include <math.h>
@@ -21,75 +21,81 @@
 #include "drw.h"
 #include "util.h"
 
-/* macros */
+	/* macros */
 #define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x_org+(r).width)  - MAX((x),(r).x_org)) \
-                              && MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
+								  && MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
-/* enums */
-enum { SchemeNorm, SchemeSel, SchemeOut, SchemeSelOut, SchemeLast }; /* color schemes */
+	/* enums */
+	enum { SchemeNorm, SchemeSel, SchemeOut, SchemeSelOut, SchemeLast }; /* color schemes */
 
-struct item {
-	char *text;
-	char *stext;
-	struct item *left, *right;
-	int id;
-	double distance;
-	int index;
-};
+	struct item {
+		char *text;
+		char *stext;
+		struct item *left, *right;
+		int id;
+		double distance;
+		int index;
+	};
 
-static char text[BUFSIZ] = "";
-static char *embed;
-static int bh, mw, mh;
-static int inputw = 0, promptw;
-static int lrpad; /* sum of left and right padding */
-static size_t cursor;
-static struct item *items = NULL;
-static struct item *matches, *matchend;
-static struct item *prev, *curr, *next, *sel;
-static int mon = -1, screen;
-static int print_index = 0;
-static int preselected = 0;
+	static char text[BUFSIZ] = "";
+	static char *embed;
+	static int bh, mw, mh;
+	static int inputw = 0, promptw;
+	static int lrpad; /* sum of left and right padding */
+	static size_t cursor;
+	static struct item *items = NULL;
+	static struct item *matches, *matchend;
+	static struct item *prev, *curr, *next, *sel;
+	static int mon = -1, screen;
+	static int print_index = 0;
+	static int preselected = 0;
 
-static int *selid = NULL;
-static unsigned int selidsize = 0;
+	static int *selid = NULL;
+	static unsigned int selidsize = 0;
 
-static Atom clip, utf8;
-static Display *dpy;
-static Window root, parentwin, win;
-static XIC xic;
+	static Atom clip, utf8;
+	static Display *dpy;
+	static Window root, parentwin, win;
+	static XIC xic;
 
-static Drw *drw;
-static Clr *scheme[SchemeLast];
+	static Drw *drw;
+	static Clr *scheme[SchemeLast];
 
-/* Xresources preferences */
-enum resource_type {
-	STRING = 0,
-	INTEGER = 1,
-	FLOAT = 2
-};
-typedef struct {
-	char *name;
-	enum resource_type type;
-	void *dst;
-} ResourcePref;
+	/* Xresources preferences */
+	enum resource_type {
+		STRING = 0,
+		INTEGER = 1,
+		FLOAT = 2
+	};
+	typedef struct {
+		char *name;
+		enum resource_type type;
+		void *dst;
+	} ResourcePref;
 
-static void load_xresources(void);
-static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
+	static void load_xresources(void);
+	static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
 
 #include "config.h"
 
-static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
-static char *(*fstrstr)(const char *, const char *) = strstr;
+	static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+	static char *(*fstrstr)(const char *, const char *) = strstr;
 
-static int
-issel(size_t id)
-{
-	for (int i = 0;i < selidsize;i++)
-		if (selid[i] == id)
-			return 1;
-	return 0;
+	static int
+	issel(size_t id)
+	{
+		for (int i = 0;i < selidsize;i++)
+			if (selid[i] == id)
+				return 1;
+		return 0;
+	}
+	static unsigned int
+	textw_clamp(const char *str, unsigned int n)
+	{
+		unsigned int w = drw_fontset_getwidth_clamp(drw, str, n) + lrpad;
+		return MIN(w, n);
 }
 
 static void
@@ -116,10 +122,10 @@ calcoffsets(void)
 		n = mw - (promptw + inputw + TEXTW("<") + TEXTW(">"));
 	/* calculate which items will begin the next page and previous page */
 	for (i = 0, next = curr; next; next = next->right)
-		if ((i += (lines > 0) ? bh : MIN(TEXTW(next->stext), n)) > n)
+		if ((i += (lines > 0) ? bh : textw_clamp(next->stext, n)) > n)
 			break;
 	for (i = 0, prev = curr; prev && prev->left; prev = prev->left)
-		if ((i += (lines > 0) ? bh : MIN(TEXTW(prev->left->stext), n)) > n)
+		if ((i += (lines > 0) ? bh : textw_clamp(prev->left->stext, n)) > n)
 			break;
 }
 
@@ -131,6 +137,9 @@ cleanup(void)
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
 	for (i = 0; i < SchemeLast; i++)
 		free(scheme[i]);
+	for (i = 0; items && items[i].text; ++i)
+		free(items[i].text);
+	free(items);
 	drw_free(drw);
 	XSync(dpy, False);
 	XCloseDisplay(dpy);
@@ -138,13 +147,20 @@ cleanup(void)
 }
 
 static char *
-cistrstr(const char *s, const char *sub)
+cistrstr(const char *h, const char *n)
 {
-	size_t len;
+	size_t i;
 
-	for (len = strlen(sub); *s; s++)
-		if (!strncasecmp(s, sub, len))
-			return (char *)s;
+	if (!n[0])
+		return (char *)h;
+
+	for (; *h; ++h) {
+		for (i = 0; n[i] && tolower((unsigned char)n[i]) ==
+		            tolower((unsigned char)h[i]); ++i)
+			;
+		if (n[i] == '\0')
+			return (char *)h;
+	}
 	return NULL;
 }
 
@@ -205,7 +221,7 @@ drawmenu(void)
 		}
 		x += w;
 		for (item = curr; item != next; item = item->right)
-			x = drawitem(item, x, 0, MIN(TEXTW(item->stext), mw - x - TEXTW(">")));
+			x = drawitem(item, x, 0, textw_clamp(item->stext, mw - x - TEXTW(">")));
 		if (next) {
 			w = TEXTW(">");
 			drw_setscheme(drw, scheme[SchemeNorm]);
@@ -350,7 +366,7 @@ match(void)
 	/* separate input text into tokens to be matched individually */
 	for (s = strtok(buf, " "); s; tokv[tokc - 1] = s, s = strtok(NULL, " "))
 		if (++tokc > tokn && !(tokv = realloc(tokv, ++tokn * sizeof *tokv)))
-			die("cannot realloc %u bytes:", tokn * sizeof *tokv);
+			die("cannot realloc %zu bytes:", tokn * sizeof *tokv);
 	len = tokc ? strlen(tokv[0]) : 0;
 
 	matches = lprefix = lsubstr = matchend = prefixend = substrend = NULL;
@@ -537,8 +553,8 @@ keypress(XKeyEvent *ev)
 
 	switch(ksym) {
 	default:
-	insert:
-		if (!iscntrl(*buf))
+insert:
+		if (!iscntrl((unsigned char)*buf))
 			insert(buf, len);
 		break;
 	case XK_Delete:
@@ -692,14 +708,13 @@ static void
 readstdin(void)
 {
 	char buf[sizeof text], *p;
-	size_t i, imax = 0, size = 0;
-	unsigned int tmpmax = 0;
+	size_t i, size = 0;
 
 	/* read each line from stdin and add it to the item list */
 	for (i = 0; fgets(buf, sizeof buf, stdin); i++) {
 		if (i + 1 >= size / sizeof *items)
 			if (!(items = realloc(items, (size += BUFSIZ))))
-				die("cannot realloc %u bytes:", size);
+				die("cannot realloc %zu bytes:", size);
 		if ((p = strchr(buf, '\n')))
 			*p = '\0';
 		if (!(items[i].text = strdup(buf)))
@@ -710,15 +725,12 @@ readstdin(void)
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
 		items[i].id = i; /* for multiselect */
 		items[i].index = i;
-		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
-		if (tmpmax > inputw) {
-			inputw = tmpmax;
-			imax = i;
-		}
+		inputw = items ? TEXTW(items[imax].stext) : 0;
+		die("cannot strdup %zu bytes:", strlen(buf) + 1);
+		items[i].out = 0;
 	}
 	if (items)
 		items[i].text = NULL;
-	inputw = items ? TEXTW(items[imax].stext) : 0;
 	lines = MIN(lines, i);
 }
 
@@ -823,12 +835,13 @@ static void
 setup(void)
 {
 	int x, y, i, j;
-	unsigned int du;
+	unsigned int du, tmp;
 	XSetWindowAttributes swa;
 	XIM xim;
 	Window w, dw, *dws;
 	XWindowAttributes wa;
 	XClassHint ch = {"dmenu", "dmenu"};
+	struct item *item;
 #ifdef XINERAMA
 	XineramaScreenInfo *info;
 	Window pw;
@@ -869,7 +882,7 @@ setup(void)
 		/* no focused window is on screen, so use pointer location instead */
 		if (mon < 0 && !area && XQueryPointer(dpy, root, &dw, &dw, &x, &y, &di, &di, &du))
 			for (i = 0; i < n; i++)
-				if (INTERSECT(x, y, 1, 1, info[i]))
+				if (INTERSECT(x, y, 1, 1, info[i]) != 0)
 					break;
 
 		x = info[i].x_org;
@@ -887,7 +900,12 @@ setup(void)
 		mw = wa.width;
 	}
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
-	inputw = MIN(inputw, mw/3);
+	for (item = items; item && item->text; ++item) {
+		if ((tmp = textw_clamp(item->text, mw/3)) > inputw) {
+			if ((inputw = tmp) == mw/3)
+				break;
+		}
+	}
 	match();
 
 	/* create menu window */
