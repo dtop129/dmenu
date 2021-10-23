@@ -844,8 +844,7 @@ setup(void)
 	struct item *item;
 #ifdef XINERAMA
 	XineramaScreenInfo *info;
-	Window pw;
-	int a, di, n, area = 0;
+	int di, n = 0;
 #endif
 	/* init appearance */
 	for (j = 0; j < SchemeLast; j++) {
@@ -862,25 +861,7 @@ setup(void)
 #ifdef XINERAMA
 	i = 0;
 	if (parentwin == root && (info = XineramaQueryScreens(dpy, &n))) {
-		XGetInputFocus(dpy, &w, &di);
-		if (mon >= 0 && mon < n)
-			i = mon;
-		else if (w != root && w != PointerRoot && w != None) {
-			/* find top-level window containing current input focus */
-			do {
-				if (XQueryTree(dpy, (pw = w), &dw, &w, &dws, &du) && dws)
-					XFree(dws);
-			} while (w != root && w != pw);
-			/* find xinerama screen with which the window intersects most */
-			if (XGetWindowAttributes(dpy, pw, &wa))
-				for (j = 0; j < n; j++)
-					if ((a = INTERSECT(wa.x, wa.y, wa.width, wa.height, info[j])) > area) {
-						area = a;
-						i = j;
-					}
-		}
-		/* no focused window is on screen, so use pointer location instead */
-		if (mon < 0 && !area && XQueryPointer(dpy, root, &dw, &dw, &x, &y, &di, &di, &du))
+		if (XQueryPointer(dpy, root, &dw, &dw, &x, &y, &di, &di, &du))
 			for (i = 0; i < n; i++)
 				if (INTERSECT(x, y, 1, 1, info[i]) != 0)
 					break;
