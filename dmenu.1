@@ -3,7 +3,7 @@
 dmenu \- dynamic menu
 .SH SYNOPSIS
 .B dmenu
-.RB [ \-bfirvd ]
+.RB [ \-bfsrvd ]
 .RB [ \-l
 .IR lines ]
 .RB [ \-m
@@ -48,8 +48,8 @@ dmenu appears at the bottom of the screen.
 dmenu grabs the keyboard before reading stdin if not reading from a tty. This
 is faster, but will lock up X until stdin reaches end\-of\-file.
 .TP
-.B \-i
-dmenu matches menu items case insensitively.
+.B \-s
+dmenu matches menu items case sensitively.
 .TP
 .B \-r
 disables shift-return. this guarantees that dmenu only prints an item read from stdin.
