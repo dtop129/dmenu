@@ -925,7 +925,8 @@ static void
 usage(void)
 {
 	fputs("usage: dmenu [-bfsrvd] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
-	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid] [-n number]\n", stderr);
+	      "             [-nb color] [-nf color] [-sb color] [-sf color]\n"
+		  "             [-w windowid] [-n/-n1 number] [-it text]\n", stderr);
 	exit(1);
 }
 
@@ -987,7 +988,10 @@ main(int argc, char *argv[])
 			colors[SchemeSel][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
-		else if (!strcmp(argv[i], "-n"))   /* preselected item */
+		else if (!strcmp(argv[i], "-it")) {   /* embedding window id */
+			const char * text = argv[++i];
+			insert(text, strlen(text));
+		} else if (!strcmp(argv[i], "-n"))   /* preselected item */
 			preselected = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-n1"))   /* preselected item */
 			preselected = atoi(argv[++i]) - 1;
