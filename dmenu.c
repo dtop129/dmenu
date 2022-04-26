@@ -719,16 +719,13 @@ readstdin(void)
 		if ((p = strchr(buf, '\n')))
 			*p = '\0';
 		if (!(items[i].text = strdup(buf)))
-			die("cannot strdup %u bytes:", strlen(buf) + 1);
+			die("cannot strdup %zu bytes:", strlen(buf) + 1);
 		if ((p = strchr(buf, '\t')))
 			*p = '\0';
 		if (!(items[i].stext = strdup(buf)))
-			die("cannot strdup %u bytes:", strlen(buf) + 1);
+			die("cannot strdup %zu bytes:", strlen(buf) + 1);
 		items[i].id = i; /* for multiselect */
 		items[i].index = i;
-		inputw = items ? TEXTW(items[imax].stext) : 0;
-		die("cannot strdup %zu bytes:", strlen(buf) + 1);
-		items[i].out = 0;
 	}
 	if (items)
 		items[i].text = NULL;
@@ -883,7 +880,7 @@ setup(void)
 	}
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 	for (item = items; item && item->text; ++item) {
-		if ((tmp = textw_clamp(item->text, mw/3)) > inputw) {
+		if ((tmp = textw_clamp(item->stext, mw/3)) > inputw) {
 			if ((inputw = tmp) == mw/3)
 				break;
 		}
