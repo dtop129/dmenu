@@ -979,8 +979,8 @@ main(int argc, char *argv[])
 			colors[SchemeSel][ColFg] = argv[++i];
 		else if (!strcmp(argv[i], "-w"))   /* embedding window id */
 			embed = argv[++i];
-		else if (!strcmp(argv[i], "-it")) {   /* embedding window id */
-			const char * text = argv[++i];
+		else if (!strcmp(argv[i], "-it")) { /* add initial text */
+			const char* text = argv[++i];
 			insert(text, strlen(text));
 		} else if (!strcmp(argv[i], "-n"))   /* preselected item */
 			preselected = atoi(argv[++i]);
