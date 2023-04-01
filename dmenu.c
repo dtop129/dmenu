@@ -12,7 +12,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#include <X11/Xresource.h>
 #ifdef XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -27,56 +26,42 @@
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
-	/* enums */
-	enum { SchemeNorm, SchemeSel, SchemeOut, SchemeSelOut, SchemeLast }; /* color schemes */
+/* enums */
+enum { SchemeNorm, SchemeSel, SchemeOut, SchemeSelOut, SchemeLast }; /* color schemes */
 
-	struct item {
-		char *text;
-		char *stext;
-		struct item *left, *right;
-		int id;
-		double distance;
-		int index;
-	};
+struct item {
+	char *text;
+	char *stext;
+	struct item *left, *right;
+	int id;
+	double distance;
+	int index;
+};
 
-	static char text[BUFSIZ] = "";
-	static char *embed;
-	static int bh, mw, mh;
-	static int inputw = 0, promptw;
-	static int lrpad; /* sum of left and right padding */
-	static size_t cursor;
-	static struct item *items = NULL;
-	static struct item *matches, *matchend;
-	static struct item *prev, *curr, *next, *sel;
-	static int mon = -1, screen;
-	static int print_index = 0;
-	static int preselected = 0;
+static char text[BUFSIZ] = "";
+static char *embed;
+static int bh, mw, mh;
+static int inputw = 0, promptw;
+static int lrpad; /* sum of left and right padding */
+static size_t cursor;
+static struct item *items = NULL;
+static struct item *matches, *matchend;
+static struct item *prev, *curr, *next, *sel;
+static int mon = -1, screen;
+static int print_index = 0;
+static int preselected = 0;
 
-	static int *selid = NULL;
-	static unsigned int selidsize = 0;
+static int *selid = NULL;
+static unsigned int selidsize = 0;
 
-	static Atom clip, utf8;
-	static Display *dpy;
-	static Window root, parentwin, win;
-	static XIC xic;
+static Atom clip, utf8;
+static Display *dpy;
+static Window root, parentwin, win;
+static XIC xic;
 
-	static Drw *drw;
-	static Clr *scheme[SchemeLast];
+static Drw *drw;
+static Clr *scheme[SchemeLast];
 
-	/* Xresources preferences */
-	enum resource_type {
-		STRING = 0,
-		INTEGER = 1,
-		FLOAT = 2
-	};
-	typedef struct {
-		char *name;
-		enum resource_type type;
-		void *dst;
-	} ResourcePref;
-
-	static void load_xresources(void);
-	static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
 
 #include "config.h"
 
@@ -732,53 +717,6 @@ readstdin(void)
 	lines = MIN(lines, i);
 }
 
-void
-resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst)
-{
-	char *sdst = NULL;
-	int *idst = NULL;
-	float *fdst = NULL;
-	sdst = dst;
-	idst = dst;
-	fdst = dst;
-	char fullname[256];
-	char *type;
-	XrmValue ret;
-	snprintf(fullname, sizeof(fullname), "%s.%s", "dmenu", name);
-	fullname[sizeof(fullname) - 1] = '\0';
-	XrmGetResource(db, fullname, "*", &type, &ret);
-	if (!(ret.addr == NULL || strncmp("String", type, 64)))
-	{
-		switch (rtype) {
-		case STRING:
-			strcpy(sdst, ret.addr);
-			break;
-		case INTEGER:
-			*idst = strtoul(ret.addr, NULL, 10);
-			break;
-		case FLOAT:
-			*fdst = strtof(ret.addr, NULL);
-			break;
-		}
-	}
-}
-
-void
-load_xresources(void)
-{
-	Display *display;
-	char *resm;
-	XrmDatabase db;
-	ResourcePref *p;
-	if (!(display = XOpenDisplay(NULL)))
-		return;
-	if (!(resm = XResourceManagerString(display)))
-		return;
-	db = XrmGetStringDatabase(resm);
-	for (p = resources; p < resources + LENGTH(resources); p++)
-		resource_load(db, p->name, p->type, p->dst);
-	XCloseDisplay(display);
-}
 
 static void
 run(void)
@@ -926,9 +864,6 @@ main(int argc, char *argv[])
 {
 	XWindowAttributes wa;
 	int i, fast = 0;
-
-	XrmInitialize();
-	load_xresources();
 
 	for (i = 1; i < argc; i++)
 		/* these options take no arguments */
