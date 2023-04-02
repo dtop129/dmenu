@@ -37,7 +37,6 @@ struct item {
 	double distance;
 	int index;
 };
-
 static char text[BUFSIZ] = "";
 static char *embed;
 static int bh, mw, mh;
@@ -820,7 +819,7 @@ setup(void)
 	match();
 
 	/* create menu window */
-	swa.override_redirect = True;
+	swa.override_redirect = False;
 	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
 	win = XCreateWindow(dpy, parentwin, x, y, mw, mh, 0,
