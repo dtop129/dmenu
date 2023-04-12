@@ -12,17 +12,15 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#ifdef XINERAMA
-#include <X11/extensions/Xinerama.h>
-#endif
+#include <X11/extensions/Xrandr.h>
 #include <X11/Xft/Xft.h>
 
 #include "drw.h"
 #include "util.h"
 
 	/* macros */
-#define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x_org+(r).width)  - MAX((x),(r).x_org)) \
-								  && MAX(0, MIN((y)+(h),(r).y_org+(r).height) - MAX((y),(r).y_org)))
+#define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x+(r).width)  - MAX((x),(r).x)) \
+								  && MAX(0, MIN((y)+(h),(r).y+(r).height) - MAX((y),(r).y)))
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -776,10 +774,9 @@ setup(void)
 	Window w, dw, *dws;
 	XWindowAttributes wa;
 	XClassHint ch = {"dmenu", "dmenu"};
-#ifdef XINERAMA
-	XineramaScreenInfo *info;
-	int di, n = 0;
-#endif
+	XRRScreenResources *screens;
+	XRRCrtcInfo *info;
+	int di = 0;
 	/* init appearance */
 	for (j = 0; j < SchemeLast; j++) {
 		scheme[j] = drw_scm_create(drw, colors[j], 2);
@@ -792,21 +789,22 @@ setup(void)
 	bh = drw->fonts->h + 2;
 	lines = MAX(lines, 0);
 	mh = (lines + 1) * bh;
-#ifdef XINERAMA
 	i = 0;
-	if (parentwin == root && (info = XineramaQueryScreens(dpy, &n))) {
+	if (parentwin == root && (screens = XRRGetScreenResources(dpy, DefaultRootWindow(dpy)))) {
 		if (XQueryPointer(dpy, root, &dw, &dw, &x, &y, &di, &di, &du))
-			for (i = 0; i < n; i++)
-				if (INTERSECT(x, y, 1, 1, info[i]) != 0)
+			for (i = 0; i < screens->ncrtc; i++) {
+				info = XRRGetCrtcInfo(dpy, screens, screens->crtcs[i]);
+				if (INTERSECT(x, y, 1, 1, *info) != 0) {
+					x = info->x;
+					y = info->y + (topbar ? 0 : info->height - mh);
+					mw = info->width;
+					XRRFreeCrtcInfo(info);
 					break;
-
-		x = info[i].x_org;
-		y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
-		mw = info[i].width;
-		XFree(info);
-	} else
-#endif
-	{
+				}
+				XRRFreeCrtcInfo(info);
+			}
+		XRRFreeScreenResources(screens);
+	} else {
 		if (!XGetWindowAttributes(dpy, parentwin, &wa))
 			die("could not get embedding window attributes: 0x%lx",
 			    parentwin);
