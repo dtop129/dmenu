@@ -19,8 +19,6 @@
 #include "util.h"
 
 	/* macros */
-#define INTERSECT(x,y,w,h,r)  (MAX(0, MIN((x)+(w),(r).x+(r).width)  - MAX((x),(r).x)) \
-								  && MAX(0, MIN((y)+(h),(r).y+(r).height) - MAX((y),(r).y)))
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -772,11 +770,12 @@ setup(void)
 	XSetWindowAttributes swa;
 	XIM xim;
 	Window w, dw, *dws;
-	XWindowAttributes wa;
 	XClassHint ch = {"dmenu", "dmenu"};
 	XRRScreenResources *screens;
 	XRRCrtcInfo *info;
-	int di = 0;
+	FILE *fp;
+	char cursor_str[32];
+	char *tok;
 	/* init appearance */
 	for (j = 0; j < SchemeLast; j++) {
 		scheme[j] = drw_scm_create(drw, colors[j], 2);
@@ -791,28 +790,33 @@ setup(void)
 	lines = MAX(lines, 0);
 	mh = (lines + 1) * bh;
 	i = 0;
-	if (parentwin == root && (screens = XRRGetScreenResources(dpy, DefaultRootWindow(dpy)))) {
-		if (XQueryPointer(dpy, root, &dw, &dw, &x, &y, &di, &di, &du))
-			for (i = 0; i < screens->ncrtc; i++) {
-				info = XRRGetCrtcInfo(dpy, screens, screens->crtcs[i]);
-				if (INTERSECT(x, y, 1, 1, *info) != 0) {
-					x = info->x;
-					y = info->y + (topbar ? 0 : info->height - mh);
-					mw = info->width;
-					XRRFreeCrtcInfo(info);
-					break;
-				}
-				XRRFreeCrtcInfo(info);
-			}
-		XRRFreeScreenResources(screens);
-	} else {
-		if (!XGetWindowAttributes(dpy, parentwin, &wa))
-			die("could not get embedding window attributes: 0x%lx",
-			    parentwin);
-		x = 0;
-		y = topbar ? 0 : wa.height - mh;
-		mw = wa.width;
+
+	if (!(fp = popen("hyprctl cursorpos", "r")))
+		die("error getting cursor position");
+	if (!(fgets(cursor_str, 32, fp)))
+		die("error getting cursor position");
+	pclose(fp);
+
+	if (!(screens = XRRGetScreenResources(dpy, DefaultRootWindow(dpy))))
+		die("error getting monitors");
+
+	tok = strtok(cursor_str, ","); x = strtol(tok, NULL, 10);
+	tok = strtok(NULL, ","); y = strtol(tok, NULL, 10);
+
+	for (i = 0; i < screens->ncrtc; i++) {
+		info = XRRGetCrtcInfo(dpy, screens, screens->crtcs[i]);
+		if ((info->x <= x && info->y <= y) &&
+				(info->x + info->width > x && info->y + info->height > y)) {
+			x = info->x;
+			y = info->y + (topbar ? 0 : info->height - mh);
+			mw = info->width;
+			XRRFreeCrtcInfo(info);
+			break;
+		}
+		XRRFreeCrtcInfo(info);
 	}
+	XRRFreeScreenResources(screens);
+
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 	inputw = mw / 3;
 	match();
