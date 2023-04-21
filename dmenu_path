@@ -1,6 +1,5 @@
 #!/bin/sh
 
-printf '%s\n' "$PATH" | tr ':' '\n' | sed 's#$#/#' | # List directories in $PATH
-xargs ls -lu --time-style=+%s |              # Add atime epoch
-awk '/^(-|l)/ { print $6, $7 }' |            # Only print timestamp and name
-sort -urn | cut -d' ' -f 2
+printf '%s\n' "$PATH" | tr ':' '\n' |
+	xargs -I {} find -P {} -executable -printf '%A@\t%f\n' |
+	sort -nr | cut -f2
