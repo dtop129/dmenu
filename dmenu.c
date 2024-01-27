@@ -786,14 +786,13 @@ run(void)
 static void
 setup(void)
 {
-	int i, j;
+	int i, j, mx;
 	unsigned int du;
 	XSetWindowAttributes swa;
 	XIM xim;
 	Window w, dw, *dws;
 	XClassHint ch = {"dmenu", "dmenu"};
 	FILE *fp;
-	char width_str[16];
 	/* init appearance */
 	for (j = 0; j < SchemeLast; j++) {
 		scheme[j] = drw_scm_create(drw, colors[j], 2);
@@ -809,21 +808,20 @@ setup(void)
 	mh = (lines + 1) * bh;
 	i = 0;
 
-	if (!(fp = popen("hyprctl monitors -j | jaq '.[] | select(.focused==true).width'", "r")))
+	if (!(fp = popen("swaymsg --raw -t get_outputs | jaq -r '.[] | select(.focused == true).rect | [.x, .width] | @csv'", "r")))
 		die("error getting monitors");
 
-	fgets(width_str, 16, fp);
-	mw = strtol(width_str, NULL, 10);
+	fscanf(fp, "%d,%d", &mx, &mw);
 
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 	inputw = mw / 3;
 	match();
 
 	/* create menu window */
-	swa.override_redirect = False;
+	swa.override_redirect = True;
 	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
-	win = XCreateWindow(dpy, parentwin, 0, 0, mw, mh, 0,
+	win = XCreateWindow(dpy, parentwin, mx, 0, mw, mh, 0,
 	                    CopyFromParent, CopyFromParent, CopyFromParent,
 	                    CWOverrideRedirect | CWBackPixel | CWEventMask, &swa);
 	XSetClassHint(dpy, win, &ch);
